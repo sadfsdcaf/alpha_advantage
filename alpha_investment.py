@@ -57,15 +57,18 @@ with st.spinner("Fetching data..."):
     fundamentals = fetch_fundamentals(symbol)
     rsi_df = fetch_technical_indicator(symbol, "RSI")
     macd_df = fetch_technical_indicator(symbol, "MACD")
+    sma_df = fetch_technical_indicator(symbol, "SMA")
 
 if not price_df.empty:
     st.header(f"{symbol.upper()} - Fundamentals")
 
-    col1, col2, col3, col4 = st.columns(4)
+    col1, col2, col3, col4, col5, col6 = st.columns(6)
     col1.metric("Market Cap", f"{fundamentals.get('MarketCapitalization', 'N/A')}")
     col2.metric("EPS", f"{fundamentals.get('EPS', 'N/A')}")
     col3.metric("P/E Ratio", f"{fundamentals.get('PERatio', 'N/A')}")
     col4.metric("Dividend Yield", f"{fundamentals.get('DividendYield', 'N/A')}")
+    col5.metric("Beta", f"{fundamentals.get('Beta', 'N/A')}")
+    col6.metric("52-Week High", f"{fundamentals.get('52WeekHigh', 'N/A')}")
 
     st.header("Price History")
     fig = go.Figure()
@@ -94,6 +97,13 @@ if not price_df.empty:
         fig_macd.add_trace(go.Scatter(x=macd_df.index, y=macd_df['MACD_Signal'], name="MACD Signal"))
         fig_macd.update_layout(yaxis_title='MACD', xaxis_title='Date')
         st.plotly_chart(fig_macd, use_container_width=True)
+
+    if not sma_df.empty:
+        st.header("SMA (Simple Moving Average)")
+        fig_sma = go.Figure()
+        fig_sma.add_trace(go.Scatter(x=sma_df.index, y=sma_df['SMA'], name="SMA"))
+        fig_sma.update_layout(yaxis_title='SMA', xaxis_title='Date')
+        st.plotly_chart(fig_sma, use_container_width=True)
 
 else:
     st.warning("No data available. Please check the stock symbol.")
