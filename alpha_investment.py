@@ -1,5 +1,5 @@
-import streamlit as st
 import requests
+import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
 
@@ -12,24 +12,24 @@ def fetch_stock_data(symbol, function='TIME_SERIES_DAILY'):
 
     if 'Time Series (Daily)' in data:
         df = pd.DataFrame(data['Time Series (Daily)']).T
-        df = df.rename(columns=lambda x: x[3:])
-        df.index = pd.to_datetime(df.index)
+        df.columns = ['open', 'high', 'low', 'close', 'volume']
         df = df.astype(float)
+        df.index = pd.to_datetime(df.index)
         df.sort_index(inplace=True)
         return df
     else:
-        st.error("Error fetching data. Please try again later or check your API key.")
+        st.error("Error fetching data. Please check your API key or try again later.")
         return pd.DataFrame()
 
 
 def fetch_fundamentals(symbol):
     url = f'https://www.alphavantage.co/query?function=OVERVIEW&symbol={symbol}&apikey={API_KEY}'
     response = requests.get(url)
-    data = response.json()
-    return data
+    return response.json()
 
-# RSI
-def fetch_technical_indicator(symbol, indicator="RSI", interval="daily", time_period=14):
+
+# Fetch technical indicators
+def fetch_technical_indicator(symbol, indicator, interval="daily", time_period=14):
     url = (f'https://www.alphavantage.co/query?function={indicator}&symbol={symbol}&interval={interval}&'
            f'time_period={time_period}&series_type=close&apikey={API_KEY}')
     response = requests.get(url)
@@ -46,6 +46,7 @@ def fetch_technical_indicator(symbol, indicator="RSI", interval="daily", time_pe
         st.error(f"Could not fetch {indicator}")
         return pd.DataFrame()
 
+
 # Streamlit UI
 st.title("📊 Enhanced Investment Dashboard")
 
@@ -55,14 +56,16 @@ with st.spinner("Fetching data..."):
     price_df = fetch_stock_data(symbol)
     fundamentals = fetch_fundamentals(symbol)
     rsi_df = fetch_technical_indicator(symbol, "RSI")
+    macd_df = fetch_technical_indicator(symbol, "MACD")
 
 if not price_df.empty:
     st.header(f"{symbol.upper()} - Fundamentals")
 
-    col1, col2, col3 = st.columns(3)
+    col1, col2, col3, col4 = st.columns(4)
     col1.metric("Market Cap", f"{fundamentals.get('MarketCapitalization', 'N/A')}")
     col2.metric("EPS", f"{fundamentals.get('EPS', 'N/A')}")
     col3.metric("P/E Ratio", f"{fundamentals.get('PERatio', 'N/A')}")
+    col4.metric("Dividend Yield", f"{fundamentals.get('DividendYield', 'N/A')}")
 
     st.header("Price History")
     fig = go.Figure()
@@ -83,6 +86,14 @@ if not price_df.empty:
         fig_rsi.add_trace(go.Scatter(x=rsi_df.index, y=rsi_df['RSI'], name="RSI"))
         fig_rsi.update_layout(yaxis_title='RSI', xaxis_title='Date')
         st.plotly_chart(fig_rsi, use_container_width=True)
+
+    if not macd_df.empty:
+        st.header("MACD (Moving Average Convergence Divergence)")
+        fig_macd = go.Figure()
+        fig_macd.add_trace(go.Scatter(x=macd_df.index, y=macd_df['MACD'], name="MACD"))
+        fig_macd.add_trace(go.Scatter(x=macd_df.index, y=macd_df['MACD_Signal'], name="MACD Signal"))
+        fig_macd.update_layout(yaxis_title='MACD', xaxis_title='Date')
+        st.plotly_chart(fig_macd, use_container_width=True)
 
 else:
     st.warning("No data available. Please check the stock symbol.")
