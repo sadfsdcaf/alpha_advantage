@@ -62,14 +62,29 @@ if st.button("Analyze"):
         if None in [dpo, dio, dso, ccc]:
             st.error("⚠️ Error calculating metrics. Some financial data might be missing.")
         else:
-            st.success(f"Financial metrics for {ticker}:")
-            st.write(f"📌 **Days Payable Outstanding (DPO)**: {dpo} days")
-            st.write(f"📌 **Days Inventory Outstanding (DIO)**: {dio} days")
-            st.write(f"📌 **Days Sales Outstanding (DSO)**: {dso} days")
-            st.write(f"📌 **Cash Conversion Cycle (CCC)**: {ccc} days")
+            st.success(f"📌 Financial metrics for {ticker}:")
+            
+            # Show calculations
+            st.markdown(f"""
+            - 📌 **Days Payable Outstanding (DPO)**: {dpo:.2f} days  
+              **Formula**: `(Accounts Payable / COGS) * 365`  
+              **Calculation**: ({accounts_payable:,.2f} / {cogs:,.2f}) * 365  
+            
+            - 📌 **Days Inventory Outstanding (DIO)**: {dio:.2f} days  
+              **Formula**: `(Inventory / COGS) * 365`  
+              **Calculation**: ({inventory:,.2f} / {cogs:,.2f}) * 365  
+
+            - 📌 **Days Sales Outstanding (DSO)**: {dso:.2f} days  
+              **Formula**: `(Accounts Receivable / Revenue) * 365`  
+              **Calculation**: ({accounts_receivable:,.2f} / {revenue:,.2f}) * 365  
+
+            - 📌 **Cash Conversion Cycle (CCC)**: {ccc:.2f} days  
+              **Formula**: `DIO + DSO - DPO`  
+              **Calculation**: {dio:.2f} + {dso:.2f} - {dpo:.2f}  
+            """)
 
             # Data visualization
             data = pd.DataFrame({"Metric": ["DPO", "DIO", "DSO", "CCC"], "Value": [dpo, dio, dso, ccc]})
             st.bar_chart(data.set_index("Metric"))
-
+          
 st.caption("📈 Data sourced from Alpha Vantage API")
