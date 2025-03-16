@@ -24,9 +24,9 @@ def get_financials(ticker):
         st.write(f"🔍 **Raw Balance Sheet API Response for {ticker}**:", balance_resp)
         st.write(f"🔍 **Raw Income Statement API Response for {ticker}**:", income_resp)
 
-        # Extract Latest Financial Values
-        latest_balance = balance_resp.get("annualReports", [{}])[0]
-        latest_income = income_resp.get("annualReports", [{}])[0]
+        # Extract Latest QUARTERLY Financial Values
+        latest_balance = balance_resp.get("quarterlyReports", [{}])[0]  # Get latest quarter
+        latest_income = income_resp.get("quarterlyReports", [{}])[0]  # Get latest quarter
 
         revenue = float(latest_income.get("totalRevenue", 0))
         cogs = float(latest_income.get("costOfRevenue", 0))
@@ -35,7 +35,7 @@ def get_financials(ticker):
         accounts_payable = float(latest_balance.get("currentAccountsPayable", 0))
 
         # Debug Extracted Values
-        st.write(f"📌 **Extracted Financial Data for {ticker}:**")
+        st.write(f"📌 **Extracted Quarterly Financial Data for {ticker}:**")
         st.write(f"- **Revenue:** {revenue:,.2f}")
         st.write(f"- **COGS:** {cogs:,.2f}")
         st.write(f"- **Accounts Receivable:** {accounts_receivable:,.2f}")
