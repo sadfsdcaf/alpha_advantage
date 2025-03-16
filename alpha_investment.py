@@ -13,7 +13,6 @@ INCOME_STATEMENT_URL = "https://www.alphavantage.co/query?function=INCOME_STATEM
 # Load S&P 500 Tickers
 sp500_tickers = pd.read_html('https://en.wikipedia.org/wiki/List_of_S%26P_500_companies')[0]['Symbol'].tolist()
 
-# Function to fetch financial data
 # Function to fetch most recent QUARTERLY financials
 def get_financials(ticker):
     try:
@@ -33,7 +32,6 @@ def get_financials(ticker):
 
         return revenue, cogs, accounts_receivable, inventory, accounts_payable
     except Exception as e:
-        st.error(f"⚠️ Error fetching data for {ticker}: {str(e)}")
         return None, None, None, None, None
 
 # Function to calculate DPO, DIO, DSO, CCC
@@ -52,43 +50,28 @@ def calculate_metrics(revenue, cogs, accounts_receivable, inventory, accounts_pa
 st.set_page_config(page_title="Cash Conversion Cycle (CCC) Dashboard", layout="wide")
 st.title("📊 Cash Conversion Cycle (CCC) Analysis")
 
-# Select company
-ticker = st.selectbox("Select a Stock Ticker", sp500_tickers)
+# Multi-select box for users to select multiple companies
+selected_tickers = st.multiselect("Select Stock Tickers", sp500_tickers, default=["AAPL", "AMZN", "TSLA"])
 
 if st.button("Analyze"):
-    revenue, cogs, accounts_receivable, inventory, accounts_payable = get_financials(ticker)
+    results = []
 
-    if None in [revenue, cogs, accounts_receivable, inventory, accounts_payable]:
-        st.error("⚠️ Unable to retrieve all necessary financial data. Try another ticker.")
-    else:
+    for ticker in selected_tickers:
+        revenue, cogs, accounts_receivable, inventory, accounts_payable = get_financials(ticker)
+
+        if None in [revenue, cogs, accounts_receivable, inventory, accounts_payable]:
+            st.warning(f"⚠️ Missing financial data for {ticker}. Skipping.")
+            continue
+
         dpo, dio, dso, ccc = calculate_metrics(revenue, cogs, accounts_receivable, inventory, accounts_payable)
 
-        if None in [dpo, dio, dso, ccc]:
-            st.error("⚠️ Error calculating metrics. Some financial data might be missing.")
-        else:
-            st.success(f"📌 Financial metrics for {ticker}:")
-            
-            # Show calculations
-            st.markdown(f"""
-            - 📌 **Days Payable Outstanding (DPO)**: {dpo:.2f} days  
-              **Formula**: `(Accounts Payable / COGS) * 365`  
-              **Calculation**: ({accounts_payable:,.2f} / {cogs:,.2f}) * 365  
-            
-            - 📌 **Days Inventory Outstanding (DIO)**: {dio:.2f} days  
-              **Formula**: `(Inventory / COGS) * 365`  
-              **Calculation**: ({inventory:,.2f} / {cogs:,.2f}) * 365  
+        if None not in [dpo, dio, dso, ccc]:
+            results.append({"Ticker": ticker, "DPO (Days)": dpo, "DIO (Days)": dio, "DSO (Days)": dso, "CCC (Days)": ccc})
 
-            - 📌 **Days Sales Outstanding (DSO)**: {dso:.2f} days  
-              **Formula**: `(Accounts Receivable / Revenue) * 365`  
-              **Calculation**: ({accounts_receivable:,.2f} / {revenue:,.2f}) * 365  
-
-            - 📌 **Cash Conversion Cycle (CCC)**: {ccc:.2f} days  
-              **Formula**: `DIO + DSO - DPO`  
-              **Calculation**: {dio:.2f} + {dso:.2f} - {dpo:.2f}  
-            """)
-
-            # Data visualization
-            data = pd.DataFrame({"Metric": ["DPO", "DIO", "DSO", "CCC"], "Value": [dpo, dio, dso, ccc]})
-            st.bar_chart(data.set_index("Metric"))
+    # Convert to DataFrame and Display in Streamlit
+    if results:
+        df_results = pd.DataFrame(results)
+        st.write("### 📊 Cash Conversion Cycle Metrics for Selected Companies")
+        st.dataframe(df_results)
 
 st.caption("📈 Data sourced from Alpha Vantage API")
