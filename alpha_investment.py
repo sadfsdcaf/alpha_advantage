@@ -2,7 +2,7 @@ import streamlit as st
 import requests
 import pandas as pd
 import time
-
+ 
 # Alpha Vantage API key
 API_KEY = "059VKV2VPORKW7KA"
 
