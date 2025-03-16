@@ -16,13 +16,12 @@ sp500_tickers = pd.read_html('https://en.wikipedia.org/wiki/List_of_S%26P_500_co
 # Function to fetch most recent QUARTERLY financials
 def get_financials(ticker):
     try:
-        # Fetch API Data
         balance_resp = requests.get(BALANCE_SHEET_URL.format(ticker, API_KEY)).json()
         income_resp = requests.get(INCOME_STATEMENT_URL.format(ticker, API_KEY)).json()
 
         # Extract Latest QUARTERLY Financial Values
-        latest_balance = balance_resp.get("quarterlyReports", [{}])[0]  # Get latest quarter
-        latest_income = income_resp.get("quarterlyReports", [{}])[0]  # Get latest quarter
+        latest_balance = balance_resp.get("quarterlyReports", [{}])[0]
+        latest_income = income_resp.get("quarterlyReports", [{}])[0]
 
         revenue = float(latest_income.get("totalRevenue", 0))
         cogs = float(latest_income.get("costOfRevenue", 0))
@@ -48,15 +47,14 @@ def calculate_metrics(revenue, cogs, accounts_receivable, inventory, accounts_pa
 
 # Streamlit UI
 st.set_page_config(page_title="Cash Conversion Cycle (CCC) Dashboard", layout="wide")
-st.title("📊 Cash Conversion Cycle (CCC) Analysis")
+st.title("📊 Cash Conversion Cycle (CCC) Analysis for All S&P 500 Companies")
 
-# Multi-select box for users to select multiple companies
-selected_tickers = st.multiselect("Select Stock Tickers", sp500_tickers, default=["AAPL", "AMZN", "TSLA"])
-
-if st.button("Analyze"):
+if st.button("Analyze All Companies"):
     results = []
 
-    for ticker in selected_tickers:
+    for ticker in sp500_tickers:
+        st.write(f"🔄 Fetching data for {ticker}...")  # Show progress
+        
         revenue, cogs, accounts_receivable, inventory, accounts_payable = get_financials(ticker)
 
         if None in [revenue, cogs, accounts_receivable, inventory, accounts_payable]:
@@ -68,10 +66,12 @@ if st.button("Analyze"):
         if None not in [dpo, dio, dso, ccc]:
             results.append({"Ticker": ticker, "DPO (Days)": dpo, "DIO (Days)": dio, "DSO (Days)": dso, "CCC (Days)": ccc})
 
+        time.sleep(15)  # Alpha Vantage free tier allows 5 API calls per minute
+
     # Convert to DataFrame and Display in Streamlit
     if results:
         df_results = pd.DataFrame(results)
-        st.write("### 📊 Cash Conversion Cycle Metrics for Selected Companies")
+        st.write("### 📊 Cash Conversion Cycle Metrics for All Companies")
         st.dataframe(df_results)
 
 st.caption("📈 Data sourced from Alpha Vantage API")
