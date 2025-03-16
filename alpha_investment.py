@@ -14,15 +14,12 @@ INCOME_STATEMENT_URL = "https://www.alphavantage.co/query?function=INCOME_STATEM
 sp500_tickers = pd.read_html('https://en.wikipedia.org/wiki/List_of_S%26P_500_companies')[0]['Symbol'].tolist()
 
 # Function to fetch financial data
+# Function to fetch most recent QUARTERLY financials
 def get_financials(ticker):
     try:
         # Fetch API Data
         balance_resp = requests.get(BALANCE_SHEET_URL.format(ticker, API_KEY)).json()
         income_resp = requests.get(INCOME_STATEMENT_URL.format(ticker, API_KEY)).json()
-
-        # Print Raw API Response for Debugging
-        st.write(f"🔍 **Raw Balance Sheet API Response for {ticker}**:", balance_resp)
-        st.write(f"🔍 **Raw Income Statement API Response for {ticker}**:", income_resp)
 
         # Extract Latest QUARTERLY Financial Values
         latest_balance = balance_resp.get("quarterlyReports", [{}])[0]  # Get latest quarter
@@ -33,14 +30,6 @@ def get_financials(ticker):
         accounts_receivable = float(latest_balance.get("currentNetReceivables", 0))
         inventory = float(latest_balance.get("inventory", 0))
         accounts_payable = float(latest_balance.get("currentAccountsPayable", 0))
-
-        # Debug Extracted Values
-        st.write(f"📌 **Extracted Quarterly Financial Data for {ticker}:**")
-        st.write(f"- **Revenue:** {revenue:,.2f}")
-        st.write(f"- **COGS:** {cogs:,.2f}")
-        st.write(f"- **Accounts Receivable:** {accounts_receivable:,.2f}")
-        st.write(f"- **Inventory:** {inventory:,.2f}")
-        st.write(f"- **Accounts Payable:** {accounts_payable:,.2f}")
 
         return revenue, cogs, accounts_receivable, inventory, accounts_payable
     except Exception as e:
