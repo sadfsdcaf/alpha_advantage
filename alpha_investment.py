@@ -4,7 +4,7 @@ import pandas as pd
 import time
 
 # Alpha Vantage API key
-API_KEY = "YOUR_API_KEY"
+API_KEY = "059VKV2VPORKW7KA"
 
 # Alpha Vantage API URLs
 BALANCE_SHEET_URL = "https://www.alphavantage.co/query?function=BALANCE_SHEET&symbol={}&apikey={}"
